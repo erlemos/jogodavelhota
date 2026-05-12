@@ -1,0 +1,702 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>A Noite do Lixo da Dona Vera</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body {
+  width: 100%; height: 100%;
+  background: #1a1a2e;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden;
+}
+#game-root {
+  width: 100%; max-width: 480px;
+  height: 100svh; max-height: 700px;
+  background: #e8f4d4;
+  overflow: hidden; position: relative;
+  font-family: 'Segoe UI', Arial, sans-serif;
+  border-radius: 12px;
+  touch-action: none;
+}
+#sky  { position:absolute; top:0; left:0; right:0; height:140px; background:linear-gradient(180deg,#87ceeb,#b8dff0); }
+#lawn { position:absolute; bottom:0; left:0; right:0; height:104px; background:#7ab648; }
+#path { position:absolute; bottom:100px; left:0; right:0; height:44px; background:#c8a96e; }
+
+/* HUD */
+.hud {
+  position:absolute; top:8px; left:0; right:0;
+  display:flex; justify-content:space-between; align-items:center;
+  padding:0 10px; z-index:20; pointer-events:none; gap:6px;
+}
+.hud-box {
+  background:rgba(255,255,255,0.9); border-radius:7px;
+  padding:3px 9px; font-size:12px; font-weight:700; color:#222;
+}
+#timer-bar-wrap {
+  position:absolute; top:36px; left:10px; right:10px;
+  height:6px; background:rgba(0,0,0,0.15); border-radius:3px; z-index:20; pointer-events:none;
+}
+#timer-bar { height:6px; background:#3fa842; border-radius:3px; }
+
+/* carried item floats beside Vera */
+#carried-float {
+  position:absolute; bottom:168px; z-index:15;
+  font-size:26px; display:none;
+  background:white; border-radius:50%; width:44px; height:44px;
+  align-items:center; justify-content:center;
+  border:3px solid #f0b429;
+  box-shadow:0 2px 10px rgba(0,0,0,0.3);
+  animation:bob 0.7s ease-in-out infinite alternate;
+  cursor:pointer;
+}
+@keyframes bob { from{transform:translateY(0)} to{transform:translateY(-6px)} }
+#carried-label {
+  position:absolute; bottom:214px; z-index:16;
+  font-size:9px; font-weight:700; color:#555;
+  background:rgba(255,255,255,0.95); border-radius:4px;
+  padding:1px 6px; display:none; white-space:nowrap; pointer-events:none;
+}
+
+/* Vera */
+#grandma { position:absolute; bottom:142px; width:36px; height:52px; z-index:18; pointer-events:none; }
+.vera-label {
+  position:absolute; bottom:196px; font-size:10px; font-weight:700;
+  color:#333; background:rgba(255,255,255,0.9); border-radius:4px;
+  padding:1px 5px; white-space:nowrap; z-index:19; pointer-events:none;
+  transform:translateX(-50%);
+}
+
+/* trash items */
+.trash-wrapper { position:absolute; cursor:pointer; }
+.trash-item {
+  width:46px; height:46px; border-radius:10px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:27px; background:white;
+  box-shadow:0 2px 6px rgba(0,0,0,0.18);
+  transition:transform 0.1s;
+  pointer-events:all;
+}
+.trash-wrapper:hover .trash-item { transform:scale(1.1); }
+.trash-wrapper:active .trash-item { transform:scale(0.9); }
+.trash-item.recycling { border:2.5px solid #2980b9; }
+.trash-item.organic   { border:2.5px solid #27ae60; }
+.trash-item.general   { border:2.5px solid #7f8c8d; }
+.trash-tag {
+  position:absolute; font-size:8px; font-weight:700;
+  border-radius:3px; padding:1px 4px; color:white;
+  bottom:-15px; left:50%; transform:translateX(-50%);
+  white-space:nowrap; pointer-events:none;
+}
+
+/* bins */
+.bin {
+  position:absolute; bottom:140px; width:56px; z-index:11;
+  display:flex; flex-direction:column; align-items:center;
+  cursor:pointer;
+}
+.bin-body {
+  width:52px; height:56px; border-radius:4px 4px 6px 6px;
+  display:flex; align-items:center; justify-content:center;
+  font-size:22px; border:2px solid rgba(0,0,0,0.2);
+  flex-direction:column; gap:1px;
+}
+.bin-strike { font-size:9px; color:white; font-weight:700; }
+.bin-label  { font-size:10px; color:#444; margin-top:2px; font-weight:700; }
+
+/* NPCs */
+.npc { position:absolute; bottom:142px; z-index:12; font-size:26px; text-align:center; pointer-events:none; }
+.npc-name {
+  font-size:10px; font-weight:700; color:#333;
+  background:rgba(255,255,255,0.9); border-radius:4px;
+  padding:1px 4px; text-align:center; white-space:nowrap; margin-bottom:1px;
+}
+.speech-bubble {
+  position:absolute; background:white; border-radius:8px;
+  padding:3px 7px; font-size:10px; color:#333; line-height:1.3;
+  border:1px solid #ddd; bottom:46px; left:-8px;
+  max-width:120px; white-space:normal;
+  box-shadow:0 1px 4px rgba(0,0,0,0.1); z-index:15; pointer-events:none;
+}
+.speech-bubble::after {
+  content:''; position:absolute; bottom:-6px; left:14px;
+  border:5px solid transparent; border-top-color:#ddd;
+}
+
+/* effects */
+.effect-text {
+  position:absolute; font-size:14px; font-weight:700;
+  pointer-events:none; z-index:25;
+  animation:floatUp 1.3s ease-out forwards;
+}
+@keyframes floatUp { 0%{opacity:1;transform:translateY(0)} 100%{opacity:0;transform:translateY(-50px)} }
+
+.weather-overlay { position:absolute; inset:0; pointer-events:none; z-index:6; }
+.rain-drop {
+  position:absolute; width:2px; height:12px;
+  background:rgba(100,160,220,0.65); border-radius:1px;
+  animation:rainFall linear infinite;
+}
+@keyframes rainFall { 0%{top:-20px} 100%{top:800px} }
+.bug {
+  position:absolute; font-size:24px; z-index:5;
+  animation:bugCrawl 3s linear infinite; pointer-events:none;
+}
+@keyframes bugCrawl { 0%{transform:translateX(0)} 50%{transform:translateX(28px)} 100%{transform:translateX(0)} }
+
+/* screens — highest z-index, fully cover game */
+.screen {
+  position:absolute; inset:0;
+  background:rgba(0,0,0,0.78);
+  display:flex; flex-direction:column; align-items:center; justify-content:center;
+  z-index:100; padding:20px; overflow-y:auto;
+}
+.screen h2 { color:white; font-size:20px; margin-bottom:10px; text-align:center; line-height:1.3; }
+.screen p  { color:#ddd; font-size:13px; text-align:center; line-height:1.6; margin-bottom:12px; }
+.screen-card {
+  background:rgba(255,255,255,0.1); border-radius:10px;
+  padding:10px 14px; margin-bottom:10px; width:100%; max-width:320px;
+}
+.screen-card .row { display:flex; align-items:flex-start; gap:8px; margin-bottom:6px; }
+.screen-card .row:last-child { margin-bottom:0; }
+.screen-card .icon { font-size:17px; flex-shrink:0; padding-top:1px; }
+.screen-card .txt  { font-size:12px; color:#ddd; line-height:1.4; }
+.level-badge {
+  display:inline-block; background:rgba(255,255,255,0.15);
+  border-radius:6px; padding:3px 12px; font-size:12px; color:#fff; margin-bottom:10px;
+}
+.btn-primary {
+  background:#f0b429; color:#1a1a1a; border:none; border-radius:12px;
+  padding:15px 40px; font-size:17px; font-weight:700;
+  cursor:pointer; min-width:190px; text-align:center; margin-top:6px;
+  box-shadow:0 0 0 5px rgba(240,180,41,0.4), 0 4px 14px rgba(0,0,0,0.4);
+  animation:pulse 1.8s ease-in-out infinite;
+  -webkit-tap-highlight-color:transparent;
+}
+.btn-primary:active { transform:scale(0.95); background:#d4a020; animation:none; }
+@keyframes pulse {
+  0%,100%{ box-shadow:0 0 0 5px rgba(240,180,41,0.4),0 4px 14px rgba(0,0,0,0.4); }
+  50%    { box-shadow:0 0 0 12px rgba(240,180,41,0.1),0 4px 18px rgba(0,0,0,0.45); }
+}
+</style>
+</head>
+<body>
+<div id="game-root">
+  <div id="sky"></div>
+  <div id="lawn"></div>
+  <div id="path"></div>
+
+  <!-- INTRO SCREEN -->
+  <div class="screen" id="screen-intro">
+    <h2>🧹 A Noite do Lixo<br>da Dona Vera</h2>
+    <div class="screen-card">
+      <div class="row"><span class="icon">💻</span><span class="txt"><b>Computador:</b> setas ← → para andar · clique no lixo para pegar · clique no item carregado para soltar</span></div>
+      <div class="row"><span class="icon">📱</span><span class="txt"><b>Celular:</b> deslize o dedo na tela para andar · toque no lixo para pegar · toque no item carregado para soltar</span></div>
+    </div>
+    <div class="screen-card">
+      <div class="row"><span class="icon">♻️</span><span class="txt"><b style="color:#7ec8e3">Azul</b> — Reciclagem: garrafas, latas, caixas, papel</span></div>
+      <div class="row"><span class="icon">🌿</span><span class="txt"><b style="color:#7ed37e">Verde</b> — Orgânico: frutas, restos de comida</span></div>
+      <div class="row"><span class="icon">🗑️</span><span class="txt"><b style="color:#ccc">Cinza</b> — Geral: o resto</span></div>
+    </div>
+    <p style="margin-bottom:14px;font-size:12px;">Cuidado com <b>Babi</b>, <b>André</b>, <b>Bia</b> e o <b>Sr. Ferreira</b>!<br>Se o tempo acabar… os bichos chegam. 🪲</p>
+    <button class="btn-primary" id="btn-intro">Vamos lá, Vera! 👵</button>
+  </div>
+
+  <!-- LEVEL SCREEN -->
+  <div class="screen" id="screen-level" style="display:none">
+    <div class="level-badge" id="lv-badge"></div>
+    <h2 id="lv-title"></h2>
+    <p id="lv-desc"></p>
+    <p style="font-size:12px;color:#aaa;margin-bottom:20px;" id="lv-meta"></p>
+    <button class="btn-primary" id="btn-level">Começar!</button>
+  </div>
+
+  <!-- RESULT SCREEN -->
+  <div class="screen" id="screen-result" style="display:none">
+    <h2 id="res-title"></h2>
+    <p id="res-body"></p>
+    <button class="btn-primary" id="btn-result"></button>
+  </div>
+
+  <!-- HUD -->
+  <div class="hud">
+    <div class="hud-box" id="hud-score">Pontos: 0</div>
+    <div class="hud-box" id="hud-level">Fase 1</div>
+    <div class="hud-box" id="hud-time">⏱ 90s</div>
+  </div>
+  <div id="timer-bar-wrap"><div id="timer-bar"></div></div>
+
+  <!-- carried item bubble -->
+  <div id="carried-float"></div>
+  <div id="carried-label">clique/toque para soltar</div>
+
+  <!-- game world -->
+  <div class="vera-label" id="vera-label">Dona Vera</div>
+  <div id="grandma"></div>
+  <div id="weather-layer" class="weather-overlay"></div>
+  <div id="npc-layer"></div>
+  <div id="trash-layer"></div>
+  <div id="bins-layer"></div>
+  <div id="effects-layer"></div>
+</div>
+
+<script>
+(function() {
+  const ROOT = document.getElementById('game-root');
+  const BIN_COLORS = { recycling:'#2980b9', organic:'#27ae60', general:'#7f8c8d' };
+
+  const TRASH = [
+    {id:'bottle', emoji:'🍾', bin:'recycling', label:'Reciclagem'},
+    {id:'can',    emoji:'🥫', bin:'recycling', label:'Reciclagem'},
+    {id:'paper',  emoji:'📰', bin:'recycling', label:'Reciclagem'},
+    {id:'box',    emoji:'📦', bin:'recycling', label:'Reciclagem'},
+    {id:'shampoo',emoji:'🧴', bin:'recycling', label:'Reciclagem'},
+    {id:'cup',    emoji:'🥤', bin:'recycling', label:'Reciclagem'},
+    {id:'banana', emoji:'🍌', bin:'organic',   label:'Orgânico'},
+    {id:'apple',  emoji:'🍎', bin:'organic',   label:'Orgânico'},
+    {id:'fish',   emoji:'🐟', bin:'organic',   label:'Orgânico'},
+    {id:'bread',  emoji:'🍞', bin:'organic',   label:'Orgânico'},
+    {id:'corn',   emoji:'🌽', bin:'organic',   label:'Orgânico'},
+    {id:'bone',   emoji:'🍖', bin:'organic',   label:'Orgânico'},
+    {id:'bag',    emoji:'🛍️', bin:'general',   label:'Geral'},
+    {id:'tissue', emoji:'🧻', bin:'general',   label:'Geral'},
+    {id:'bulb',   emoji:'💡', bin:'general',   label:'Geral'},
+  ];
+
+  const BINS = [
+    {id:'recycling', color:'#2980b9', emoji:'♻️', label:'Reciclagem', xr:0.67},
+    {id:'organic',   color:'#27ae60', emoji:'🌿', label:'Orgânico',   xr:0.80},
+    {id:'general',   color:'#7f8c8d', emoji:'🗑️', label:'Geral',      xr:0.92},
+  ];
+
+  const LEVELS = [
+    {items:4, time:90, comp:null,        title:'Uma noite tranquila',     desc:'Separa o lixo antes que os coletores cheguem!'},
+    {items:5, time:85, comp:'babi',      title:'A Babi apareceu!',        desc:'Sua filha parou pra "dar um oi rápido" e não para de falar.'},
+    {items:5, time:80, comp:'rain',      title:'Começou a chover',        desc:'O chão está escorregadio e a Vera anda mais devagar.'},
+    {items:6, time:78, comp:'andre',     title:'André à solta!',          desc:'Seu neto está chutando as lixeiras de novo. Claro.'},
+    {items:6, time:75, comp:'bia',       title:'Bia em modo foguete',     desc:'Sua neta está correndo em círculos e atrapalhando tudo.'},
+    {items:6, time:72, comp:'neighbour', title:'Sr. Ferreira na calçada', desc:'O vizinho resolveu "tomar um ar" justamente agora.'},
+    {items:7, time:68, comp:'strike',    title:'Greve dos coletores!',    desc:'Só uma lixeira está funcionando hoje. Qual será?'},
+    {items:8, time:65, comp:'all',       title:'Caos total',              desc:'Todo mundo apareceu ao mesmo tempo. Boa sorte, Vera.'},
+  ];
+
+  const NPC_LINES = {
+    babi:      ["Mãe, você comeu?","Fico só um minutinho!","Viu minhas chaves?","Deixa eu te ajudar!"],
+    andre:     ["Vovó, me olha!","Posso comer um biscoito?","Chutei a lixeira!!","Que tédio!!!"],
+    bia:       ["Vovó, olha pra mim!","Achei um bichinho!","Essa lixeira é MINHA!","Vamos tomar sorvete?"],
+    neighbour: ["Boa noite, Vera!","Sua lixeira tá vazando…","No meu tempo era diferente...","Que lixo cheiroso!"],
+  };
+
+  // ── state ──────────────────────────────────────────────────────
+  let W = ROOT.offsetWidth || 380;
+  let S = {};       // game state
+  let raf = null;
+  let running = false;
+  let moveDir = 0;  // -1 left, 0 still, 1 right
+
+  // touch-drag movement
+  let touchStartX = null;
+  let touchLastX  = null;
+
+  // ── SVG ────────────────────────────────────────────────────────
+  function grandmaSVG() {
+    return `<svg viewBox="0 0 36 52" xmlns="http://www.w3.org/2000/svg">
+      <ellipse cx="18" cy="8" rx="8" ry="8" fill="#f5cba7"/>
+      <ellipse cx="18" cy="7" rx="9" ry="5" fill="#7d6608"/>
+      <rect x="10" y="16" width="16" height="20" rx="4" fill="#8e44ad"/>
+      <line x1="10" y1="22" x2="3"  y2="30" stroke="#f5cba7" stroke-width="4" stroke-linecap="round"/>
+      <line x1="26" y1="22" x2="33" y2="30" stroke="#f5cba7" stroke-width="4" stroke-linecap="round"/>
+      <line x1="14" y1="36" x2="12" y2="50" stroke="#7d6608" stroke-width="4" stroke-linecap="round"/>
+      <line x1="22" y1="36" x2="24" y2="50" stroke="#7d6608" stroke-width="4" stroke-linecap="round"/>
+      <circle cx="14" cy="9" r="1.5" fill="#2c3e50"/>
+      <circle cx="22" cy="9" r="1.5" fill="#2c3e50"/>
+      <path d="M15 13 Q18 15 21 13" stroke="#c0392b" stroke-width="1.2" fill="none" stroke-linecap="round"/>
+    </svg>`;
+  }
+
+  // ── screens ────────────────────────────────────────────────────
+  function showScreen(id) {
+    ['screen-intro','screen-level','screen-result'].forEach(s => {
+      document.getElementById(s).style.display = (s === id) ? 'flex' : 'none';
+    });
+  }
+
+  function showLevelIntro(level) {
+    const lv = LEVELS[level];
+    document.getElementById('lv-badge').textContent = 'Fase ' + (level+1) + ' de ' + LEVELS.length;
+    document.getElementById('lv-title').textContent = lv.title;
+    document.getElementById('lv-desc').textContent  = lv.desc;
+    document.getElementById('lv-meta').textContent  = lv.items + ' itens · ⏱ ' + lv.time + 's';
+    showScreen('screen-level');
+    document.getElementById('btn-level').onclick = () => { showScreen(null); startGame(level); };
+  }
+
+  function showResult(title, body, label, cb) {
+    document.getElementById('res-title').innerHTML = title;
+    document.getElementById('res-body').innerHTML  = body;
+    const btn = document.getElementById('btn-result');
+    btn.textContent = label;
+    btn.onclick = () => { showScreen(null); cb(); };
+    showScreen('screen-result');
+  }
+
+  // ── init ───────────────────────────────────────────────────────
+  function initState(level) {
+    W = ROOT.offsetWidth || 380;
+    const lv = LEVELS[level];
+    const byBin = {recycling:[], organic:[], general:[]};
+    TRASH.forEach(t => byBin[t.bin].push(t));
+    const cats = ['recycling','organic','general'];
+    const items = [];
+    for (let i = 0; i < lv.items; i++) {
+      const pool = byBin[cats[i % 3]];
+      const t = pool[Math.floor(Math.random() * pool.length)];
+      items.push({...t, uid:i,
+        x: 24 + (i%4)*(W*0.14) + Math.random()*10,
+        y: 52 + Math.floor(i/4)*56 + Math.random()*10,
+        collected:false
+      });
+    }
+    const all = lv.comp === 'all';
+    const npcs = [];
+    if (lv.comp==='babi'     ||all) npcs.push({id:'babi',      name:'Babi',        emoji:'👩', x:W*0.38, dir:1,  speed:0.40, bubble:null, bt:0});
+    if (lv.comp==='andre'    ||all) npcs.push({id:'andre',     name:'André',       emoji:'👦', x:W*0.28, dir:-1, speed:0.95, bubble:null, bt:0});
+    if (lv.comp==='bia'      ||all) npcs.push({id:'bia',       name:'Bia',         emoji:'👧', x:W*0.50, dir:1,  speed:0.80, bubble:null, bt:0});
+    if (lv.comp==='neighbour'||all) npcs.push({id:'neighbour', name:'Sr. Ferreira',emoji:'👴', x:W*0.62, dir:1,  speed:0.18, bubble:null, bt:0});
+    return {
+      level, lv,
+      score:0, timeLeft:lv.time,
+      items, carried:null,
+      grandmaX: W * 0.22,
+      npcs,
+      strikeActive: lv.comp==='strike'||all,
+      strikeTarget: BINS[Math.floor(Math.random()*BINS.length)].id,
+      rainActive:   lv.comp==='rain'  ||all,
+      slowFactor:  (lv.comp==='rain'  ||all) ? 0.6 : 1.0,
+      collected:0, needed:lv.items,
+      lastTick: Date.now(),
+      npcBlocking: false,
+    };
+  }
+
+  // ── pick up ────────────────────────────────────────────────────
+  function pickUp(uid) {
+    if (!running) return;
+    if (S.carried) { effect('Já tá carregando algo!', '#e74c3c'); return; }
+    if (S.npcBlocking) { effect('Tem alguém no caminho! 😅', '#e74c3c'); return; }
+    const it = S.items.find(i => i.uid === uid);
+    if (!it || it.collected) return;
+    S.carried = it;
+    it.collected = true;
+    effect('Pegou ' + it.emoji, '#27ae60');
+    updateFloat();
+    render();
+  }
+
+  // ── drop ──────────────────────────────────────────────────────
+  function drop() {
+    if (!running || !S.carried) return;
+    if (S.npcBlocking) { effect('Alguém está bloqueando!', '#e74c3c'); return; }
+    let best = null, bestD = 999;
+    BINS.forEach(bin => {
+      if (S.strikeActive && bin.id !== S.strikeTarget) return;
+      const d = Math.abs(Math.round(W * bin.xr) - S.grandmaX);
+      if (d < bestD) { bestD = d; best = bin; }
+    });
+    if (!best || bestD > 95) { effect('Chegue perto de uma lixeira!', '#e74c3c'); return; }
+    const it = S.carried;
+    S.carried = null;
+    if (it.bin === best.id) {
+      const pts = S.rainActive ? 8 : 10;
+      S.score += pts; S.collected++;
+      effect('+' + pts + (S.rainActive ? ' ☔' : ' ✓'), '#27ae60');
+      if (S.collected >= S.needed) { running = false; cancelAnimationFrame(raf); setTimeout(levelClear, 400); }
+    } else {
+      S.score = Math.max(0, S.score - 5);
+      it.collected = false;
+      effect('Lixeira errada! -5 😬', '#e74c3c');
+    }
+    updateFloat();
+    render();
+  }
+
+  // ── carried float ──────────────────────────────────────────────
+  function updateFloat() {
+    const cf = document.getElementById('carried-float');
+    const cl = document.getElementById('carried-label');
+    if (S.carried) {
+      cf.textContent   = S.carried.emoji;
+      cf.style.display = 'flex';
+      cl.style.display = 'block';
+    } else {
+      cf.style.display = 'none';
+      cl.style.display = 'none';
+    }
+    positionFloat();
+  }
+
+  function positionFloat() {
+    if (!S.carried) return;
+    const cf = document.getElementById('carried-float');
+    const cl = document.getElementById('carried-label');
+    cf.style.left = (S.grandmaX + 20) + 'px';
+    cl.style.left = (S.grandmaX + 10) + 'px';
+  }
+
+  // ── effect text ────────────────────────────────────────────────
+  function effect(msg, color) {
+    const el = document.createElement('div');
+    el.className = 'effect-text';
+    el.style.left  = Math.max(10, S.grandmaX - 50) + 'px';
+    el.style.top   = '150px';
+    el.style.color = color || '#c0392b';
+    el.textContent = msg;
+    document.getElementById('effects-layer').appendChild(el);
+    setTimeout(() => el.remove(), 1400);
+  }
+
+  // ── render ─────────────────────────────────────────────────────
+  function render() {
+    // Vera
+    document.getElementById('grandma').style.left   = (S.grandmaX - 18) + 'px';
+    document.getElementById('grandma').innerHTML     = grandmaSVG();
+    document.getElementById('vera-label').style.left = S.grandmaX + 'px';
+    positionFloat();
+
+    // HUD
+    document.getElementById('hud-score').textContent = 'Pontos: ' + S.score;
+    document.getElementById('hud-level').textContent = 'Fase ' + (S.level + 1);
+    document.getElementById('hud-time').textContent  = '⏱ ' + Math.ceil(S.timeLeft) + 's';
+    const pct = Math.max(0, S.timeLeft / S.lv.time * 100);
+    const bar = document.getElementById('timer-bar');
+    bar.style.width      = pct + '%';
+    bar.style.background = pct > 40 ? '#3fa842' : pct > 20 ? '#e67e22' : '#c0392b';
+
+    // trash items
+    const tl = document.getElementById('trash-layer');
+    tl.innerHTML = '';
+    S.items.forEach(it => {
+      if (it.collected) return;
+      const wrap = document.createElement('div');
+      wrap.className = 'trash-wrapper';
+      wrap.style.left = it.x + 'px';
+      wrap.style.top  = it.y + 'px';
+
+      const d = document.createElement('div');
+      d.className = 'trash-item ' + it.bin;
+      d.textContent = it.emoji;
+
+      const tag = document.createElement('div');
+      tag.className = 'trash-tag';
+      tag.style.background = BIN_COLORS[it.bin];
+      tag.textContent = it.label;
+
+      wrap.appendChild(d);
+      wrap.appendChild(tag);
+
+      // mouse click (desktop)
+      wrap.addEventListener('mousedown', e => { e.stopPropagation(); pickUp(it.uid); });
+      // touch tap (mobile) — touchstart fires before any drag logic
+      wrap.addEventListener('touchstart', e => { e.stopPropagation(); }, {passive:true});
+      wrap.addEventListener('touchend',   e => { e.preventDefault(); e.stopPropagation(); pickUp(it.uid); }, {passive:false});
+
+      tl.appendChild(wrap);
+    });
+
+    // bins
+    const bl = document.getElementById('bins-layer');
+    bl.innerHTML = '';
+    BINS.forEach(bin => {
+      const struck = S.strikeActive && bin.id !== S.strikeTarget;
+      const d = document.createElement('div');
+      d.className = 'bin';
+      d.style.left = Math.round(W * bin.xr - 28) + 'px';
+
+      const body = document.createElement('div');
+      body.className = 'bin-body';
+      body.style.background = struck ? '#999' : bin.color;
+      body.style.opacity    = struck ? '0.5' : '1';
+      body.innerHTML = bin.emoji + (struck ? '<div class="bin-strike">⛔ GREVE</div>' : '');
+
+      const lbl = document.createElement('div');
+      lbl.className = 'bin-label';
+      lbl.textContent = struck ? '' : bin.label;
+
+      d.appendChild(body);
+      d.appendChild(lbl);
+      bl.appendChild(d);
+    });
+
+    // NPCs
+    const nl = document.getElementById('npc-layer');
+    nl.innerHTML = '';
+    S.npcs.forEach(npc => {
+      const d  = document.createElement('div');
+      d.className  = 'npc';
+      d.style.left = Math.round(npc.x) + 'px';
+
+      const nm = document.createElement('div');
+      nm.className = 'npc-name';
+      nm.textContent = npc.name;
+
+      const em = document.createElement('div');
+      em.textContent = npc.emoji;
+
+      d.appendChild(nm);
+      d.appendChild(em);
+
+      if (npc.bubble) {
+        const b = document.createElement('div');
+        b.className   = 'speech-bubble';
+        b.textContent = npc.bubble;
+        d.appendChild(b);
+      }
+      nl.appendChild(d);
+    });
+
+    // rain
+    const wl = document.getElementById('weather-layer');
+    if (S.rainActive && wl.children.length < 22) {
+      for (let i = 0; i < 22; i++) {
+        const r = document.createElement('div');
+        r.className = 'rain-drop';
+        r.style.left = Math.random() * 100 + '%';
+        r.style.animationDuration = (0.35 + Math.random() * 0.4) + 's';
+        r.style.animationDelay   = (-Math.random()) + 's';
+        wl.appendChild(r);
+      }
+    } else if (!S.rainActive) {
+      wl.innerHTML = '';
+    }
+  }
+
+  // ── game loop ──────────────────────────────────────────────────
+  function loop() {
+    if (!running) return;
+    const now = Date.now();
+    const dt  = Math.min((now - S.lastTick) / 1000, 0.1);
+    S.lastTick = now;
+    S.timeLeft -= dt;
+    if (S.timeLeft <= 0) { gameFail(); return; }
+
+    // move Vera
+    if (moveDir !== 0) {
+      S.grandmaX = Math.max(20, Math.min(W - 50,
+        S.grandmaX + moveDir * 140 * S.slowFactor * dt));
+    }
+
+    // NPCs
+    S.npcs.forEach(npc => {
+      npc.x += npc.dir * npc.speed * 44 * dt;
+      if (npc.x < 22)      { npc.x = 22;      npc.dir =  1; }
+      if (npc.x > W - 60)  { npc.x = W - 60;  npc.dir = -1; }
+      npc.bt -= dt;
+      if (npc.bt <= 0) {
+        const lines = NPC_LINES[npc.id];
+        npc.bubble = lines[Math.floor(Math.random() * lines.length)];
+        npc.bt = 2.5 + Math.random() * 2.5;
+      }
+      npc.blocking = Math.abs(npc.x - S.grandmaX) < 44;
+    });
+    S.npcBlocking = S.npcs.some(n => n.blocking);
+
+    render();
+    raf = requestAnimationFrame(loop);
+  }
+
+  // ── level clear / fail ─────────────────────────────────────────
+  function levelClear() {
+    const bonus = Math.round(S.timeLeft * 2);
+    S.score += bonus;
+    const next = S.level + 1;
+    if (next >= LEVELS.length) {
+      showResult('🏆 Dona Vera venceu tudo!',
+        'Pontuação final: <b>' + S.score + '</b> pontos.<br><br>As lixeiras estão fora, a família foi embora e até o Sr. Ferreira foi pra casa. Missão cumprida!',
+        'Jogar de novo', () => showLevelIntro(0));
+    } else {
+      showResult('🎉 Fase ' + (S.level+1) + ' concluída!',
+        'Bônus de tempo: <b>+' + bonus + '</b><br>Total: <b>' + S.score + '</b> pontos<br><br>' + LEVELS[next].desc,
+        'Próxima fase →', () => showLevelIntro(next));
+    }
+  }
+
+  function gameFail() {
+    running = false; cancelAnimationFrame(raf);
+    const wl = document.getElementById('weather-layer');
+    wl.innerHTML = '';
+    for (let i = 0; i < 14; i++) {
+      const b = document.createElement('div');
+      b.className = 'bug';
+      b.style.left = Math.random() * 88 + '%';
+      b.style.top  = (80 + Math.random() * 320) + 'px';
+      b.style.animationDelay = (-Math.random() * 3) + 's';
+      b.textContent = ['🪲','🐛','🦟','🪳'][Math.floor(Math.random() * 4)];
+      wl.appendChild(b);
+    }
+    showResult('🪲 Os bichos tomaram conta!',
+      'A Dona Vera ficou sem tempo!<br>Pontuação: <b>' + S.score + '</b>',
+      'Tentar de novo', () => { wl.innerHTML = ''; showLevelIntro(S.level); });
+  }
+
+  function startGame(level) {
+    cancelAnimationFrame(raf);
+    running  = true;
+    moveDir  = 0;
+    touchStartX = null;
+    touchLastX  = null;
+    S = initState(level);
+    updateFloat();
+    render();
+    loop();
+  }
+
+  // ── keyboard ───────────────────────────────────────────────────
+  window.addEventListener('keydown', e => {
+    if (!running) return;
+    if (e.key === 'ArrowLeft')  { e.preventDefault(); moveDir = -1; }
+    if (e.key === 'ArrowRight') { e.preventDefault(); moveDir =  1; }
+  });
+  window.addEventListener('keyup', e => {
+    if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') moveDir = 0;
+  });
+
+  // ── touch drag to move (whole game area, but NOT on interactive items) ──
+  ROOT.addEventListener('touchstart', e => {
+    if (!running) return;
+    if (e.target.closest('.trash-wrapper') || e.target.closest('#carried-float')) return;
+    touchStartX = e.touches[0].clientX;
+    touchLastX  = e.touches[0].clientX;
+  }, {passive:true});
+
+  ROOT.addEventListener('touchmove', e => {
+    if (!running || touchLastX === null) return;
+    if (e.target.closest('.trash-wrapper') || e.target.closest('#carried-float')) return;
+    e.preventDefault();
+    const dx = e.touches[0].clientX - touchLastX;
+    touchLastX = e.touches[0].clientX;
+    S.grandmaX = Math.max(20, Math.min(W - 50, S.grandmaX + dx * 0.7));
+  }, {passive:false});
+
+  ROOT.addEventListener('touchend', e => {
+    if (e.target.closest('.trash-wrapper') || e.target.closest('#carried-float')) return;
+    touchStartX = null;
+    touchLastX  = null;
+  }, {passive:true});
+
+  // ── carried float: click or touch to drop ─────────────────────
+  const cf = document.getElementById('carried-float');
+  cf.addEventListener('mousedown', e => { e.stopPropagation(); drop(); });
+  cf.addEventListener('touchstart', e => { e.stopPropagation(); }, {passive:true});
+  cf.addEventListener('touchend',   e => { e.preventDefault(); e.stopPropagation(); drop(); }, {passive:false});
+
+  // ── screen buttons ─────────────────────────────────────────────
+  document.getElementById('btn-intro').addEventListener('click', () => {
+    showScreen(null); showLevelIntro(0);
+  });
+
+})();
+</script>
+</body>
+</html>
