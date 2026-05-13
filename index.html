@@ -1,4 +1,3 @@
-<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -225,6 +224,8 @@ function pickUp(uid){
   var it=null;
   for(var i=0;i<S.items.length;i++){if(S.items[i].uid===uid){it=S.items[i];break;}}
   if(!it||it.collected)return;
+  var dist=Math.abs((it.x+23)-S.grandmaX);
+  if(dist>90){effect('Chegue mais perto!','#e67e22');return;}
   S.carried=it;it.collected=true;
   effect('Pegou '+it.emoji,'#27ae60');
   updateFloat();render();
@@ -298,8 +299,17 @@ function render(){
     wrap.appendChild(d);wrap.appendChild(tag);
     (function(uid){
       wrap.addEventListener('mousedown',function(e){e.stopPropagation();pickUp(uid);});
-      wrap.addEventListener('touchstart',function(e){e.stopPropagation();},{passive:true});
-      wrap.addEventListener('touchend',function(e){e.preventDefault();e.stopPropagation();pickUp(uid);},{passive:false});
+      var itemTouchStartX=null;
+      wrap.addEventListener('touchstart',function(e){
+        itemTouchStartX=e.touches[0].clientX;
+      },{passive:true});
+      wrap.addEventListener('touchend',function(e){
+        // Only pick up if finger didn't move much (tap, not drag)
+        if(itemTouchStartX!==null&&Math.abs(e.changedTouches[0].clientX-itemTouchStartX)<12){
+          e.preventDefault();e.stopPropagation();pickUp(uid);
+        }
+        itemTouchStartX=null;
+      },{passive:false});
     })(it.uid);
     tl.appendChild(wrap);
   });
@@ -400,21 +410,24 @@ window.addEventListener('keydown',function(e){
 window.addEventListener('keyup',function(e){
   if(e.key==='ArrowLeft'||e.key==='ArrowRight')moveDir=0;
 });
+// Touch movement: capture ALL touchstart to record position,
+// then move on touchmove regardless of what was touched first.
+// Item pickup happens on touchend only, so drag and tap don't conflict.
 ROOT.addEventListener('touchstart',function(e){
   if(!running)return;
-  if(e.target.closest('.trash-wrapper')||e.target.closest('#carried-float'))return;
   touchLastX=e.touches[0].clientX;
 },{passive:true});
 ROOT.addEventListener('touchmove',function(e){
   if(!running||touchLastX===null)return;
-  if(e.target.closest('.trash-wrapper')||e.target.closest('#carried-float'))return;
   e.preventDefault();
   var dx=e.touches[0].clientX-touchLastX;
   touchLastX=e.touches[0].clientX;
-  S.grandmaX=Math.max(20,Math.min(W-50,S.grandmaX+dx*0.7));
+  // Only move Vera if drag is meaningful (not a tap on an item)
+  if(Math.abs(dx)>1){
+    S.grandmaX=Math.max(20,Math.min(W-50,S.grandmaX+dx*0.7));
+  }
 },{passive:false});
 ROOT.addEventListener('touchend',function(e){
-  if(e.target.closest('.trash-wrapper')||e.target.closest('#carried-float'))return;
   touchLastX=null;
 },{passive:true});
 var cf=document.getElementById('carried-float');
