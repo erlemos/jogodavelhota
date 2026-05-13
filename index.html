@@ -1,3 +1,4 @@
+html
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -25,7 +26,6 @@ html, body {
 #lawn { position:absolute; bottom:0; left:0; right:0; height:104px; background:#7ab648; }
 #path { position:absolute; bottom:100px; left:0; right:0; height:44px; background:#c8a96e; }
 
-/* HUD */
 .hud {
   position:absolute; top:8px; left:0; right:0;
   display:flex; justify-content:space-between; align-items:center;
@@ -41,7 +41,6 @@ html, body {
 }
 #timer-bar { height:6px; background:#3fa842; border-radius:3px; }
 
-/* carried item floats beside Vera */
 #carried-float {
   position:absolute; bottom:168px; z-index:15;
   font-size:26px; display:none;
@@ -60,7 +59,6 @@ html, body {
   padding:1px 6px; display:none; white-space:nowrap; pointer-events:none;
 }
 
-/* Vera */
 #grandma { position:absolute; bottom:142px; width:36px; height:52px; z-index:18; pointer-events:none; }
 .vera-label {
   position:absolute; bottom:196px; font-size:10px; font-weight:700;
@@ -69,7 +67,6 @@ html, body {
   transform:translateX(-50%);
 }
 
-/* trash items */
 .trash-wrapper { position:absolute; cursor:pointer; }
 .trash-item {
   width:46px; height:46px; border-radius:10px;
@@ -91,7 +88,6 @@ html, body {
   white-space:nowrap; pointer-events:none;
 }
 
-/* bins */
 .bin {
   position:absolute; bottom:140px; width:56px; z-index:11;
   display:flex; flex-direction:column; align-items:center;
@@ -106,7 +102,6 @@ html, body {
 .bin-strike { font-size:9px; color:white; font-weight:700; }
 .bin-label  { font-size:10px; color:#444; margin-top:2px; font-weight:700; }
 
-/* NPCs */
 .npc { position:absolute; bottom:142px; z-index:12; font-size:26px; text-align:center; pointer-events:none; }
 .npc-name {
   font-size:10px; font-weight:700; color:#333;
@@ -125,7 +120,6 @@ html, body {
   border:5px solid transparent; border-top-color:#ddd;
 }
 
-/* effects */
 .effect-text {
   position:absolute; font-size:14px; font-weight:700;
   pointer-events:none; z-index:25;
@@ -146,7 +140,6 @@ html, body {
 }
 @keyframes bugCrawl { 0%{transform:translateX(0)} 50%{transform:translateX(28px)} 100%{transform:translateX(0)} }
 
-/* screens — highest z-index, fully cover game */
 .screen {
   position:absolute; inset:0;
   background:rgba(0,0,0,0.78);
@@ -188,7 +181,6 @@ html, body {
   <div id="lawn"></div>
   <div id="path"></div>
 
-  <!-- INTRO SCREEN -->
   <div class="screen" id="screen-intro">
     <h2>🧹 A Noite do Lixo<br>da Dona Vera</h2>
     <div class="screen-card">
@@ -204,7 +196,6 @@ html, body {
     <button class="btn-primary" id="btn-intro">Vamos lá, Vera! 👵</button>
   </div>
 
-  <!-- LEVEL SCREEN -->
   <div class="screen" id="screen-level" style="display:none">
     <div class="level-badge" id="lv-badge"></div>
     <h2 id="lv-title"></h2>
@@ -213,14 +204,12 @@ html, body {
     <button class="btn-primary" id="btn-level">Começar!</button>
   </div>
 
-  <!-- RESULT SCREEN -->
   <div class="screen" id="screen-result" style="display:none">
     <h2 id="res-title"></h2>
     <p id="res-body"></p>
     <button class="btn-primary" id="btn-result"></button>
   </div>
 
-  <!-- HUD -->
   <div class="hud">
     <div class="hud-box" id="hud-score">Pontos: 0</div>
     <div class="hud-box" id="hud-level">Fase 1</div>
@@ -228,11 +217,9 @@ html, body {
   </div>
   <div id="timer-bar-wrap"><div id="timer-bar"></div></div>
 
-  <!-- carried item bubble -->
   <div id="carried-float"></div>
   <div id="carried-label">clique/toque para soltar</div>
 
-  <!-- game world -->
   <div class="vera-label" id="vera-label">Dona Vera</div>
   <div id="grandma"></div>
   <div id="weather-layer" class="weather-overlay"></div>
@@ -289,18 +276,9 @@ html, body {
     neighbour: ["Boa noite, Vera!","Sua lixeira tá vazando…","No meu tempo era diferente...","Que lixo cheiroso!"],
   };
 
-  // ── state ──────────────────────────────────────────────────────
   let W = ROOT.offsetWidth || 380;
-  let S = {};       // game state
-  let raf = null;
-  let running = false;
-  let moveDir = 0;  // -1 left, 0 still, 1 right
+  let S = {}, raf = null, running = false, moveDir = 0, touchLastX = null;
 
-  // touch-drag movement
-  let touchStartX = null;
-  let touchLastX  = null;
-
-  // ── SVG ────────────────────────────────────────────────────────
   function grandmaSVG() {
     return `<svg viewBox="0 0 36 52" xmlns="http://www.w3.org/2000/svg">
       <ellipse cx="18" cy="8" rx="8" ry="8" fill="#f5cba7"/>
@@ -316,7 +294,6 @@ html, body {
     </svg>`;
   }
 
-  // ── screens ────────────────────────────────────────────────────
   function showScreen(id) {
     ['screen-intro','screen-level','screen-result'].forEach(s => {
       document.getElementById(s).style.display = (s === id) ? 'flex' : 'none';
@@ -342,7 +319,6 @@ html, body {
     showScreen('screen-result');
   }
 
-  // ── init ───────────────────────────────────────────────────────
   function initState(level) {
     W = ROOT.offsetWidth || 380;
     const lv = LEVELS[level];
@@ -366,250 +342,172 @@ html, body {
     if (lv.comp==='bia'      ||all) npcs.push({id:'bia',       name:'Bia',         emoji:'👧', x:W*0.50, dir:1,  speed:0.80, bubble:null, bt:0});
     if (lv.comp==='neighbour'||all) npcs.push({id:'neighbour', name:'Sr. Ferreira',emoji:'👴', x:W*0.62, dir:1,  speed:0.18, bubble:null, bt:0});
     return {
-      level, lv,
-      score:0, timeLeft:lv.time,
-      items, carried:null,
-      grandmaX: W * 0.22,
-      npcs,
+      level, lv, score:0, timeLeft:lv.time, items, carried:null,
+      grandmaX: W * 0.22, npcs,
       strikeActive: lv.comp==='strike'||all,
       strikeTarget: BINS[Math.floor(Math.random()*BINS.length)].id,
       rainActive:   lv.comp==='rain'  ||all,
       slowFactor:  (lv.comp==='rain'  ||all) ? 0.6 : 1.0,
       collected:0, needed:lv.items,
-      lastTick: Date.now(),
-      npcBlocking: false,
+      lastTick: Date.now(), npcBlocking: false,
     };
   }
 
-  // ── pick up ────────────────────────────────────────────────────
   function pickUp(uid) {
     if (!running) return;
     if (S.carried) { effect('Já tá carregando algo!', '#e74c3c'); return; }
     if (S.npcBlocking) { effect('Tem alguém no caminho! 😅', '#e74c3c'); return; }
     const it = S.items.find(i => i.uid === uid);
     if (!it || it.collected) return;
-    S.carried = it;
-    it.collected = true;
+    S.carried = it; it.collected = true;
     effect('Pegou ' + it.emoji, '#27ae60');
-    updateFloat();
-    render();
+    updateFloat(); render();
   }
 
-  // ── drop ──────────────────────────────────────────────────────
   function drop() {
     if (!running || !S.carried) return;
     if (S.npcBlocking) { effect('Alguém está bloqueando!', '#e74c3c'); return; }
+    const itemX = S.grandmaX + 20;
     let best = null, bestD = 999;
     BINS.forEach(bin => {
       if (S.strikeActive && bin.id !== S.strikeTarget) return;
-      const d = Math.abs(Math.round(W * bin.xr) - S.grandmaX);
+      const d = Math.abs(Math.round(W * bin.xr) - itemX);
       if (d < bestD) { bestD = d; best = bin; }
     });
     if (!best || bestD > 95) { effect('Chegue perto de uma lixeira!', '#e74c3c'); return; }
-    const it = S.carried;
-    S.carried = null;
+    const it = S.carried; S.carried = null;
     if (it.bin === best.id) {
       const pts = S.rainActive ? 8 : 10;
       S.score += pts; S.collected++;
       effect('+' + pts + (S.rainActive ? ' ☔' : ' ✓'), '#27ae60');
       if (S.collected >= S.needed) { running = false; cancelAnimationFrame(raf); setTimeout(levelClear, 400); }
     } else {
-      S.score = Math.max(0, S.score - 5);
-      it.collected = false;
+      S.score = Math.max(0, S.score - 5); it.collected = false;
       effect('Lixeira errada! -5 😬', '#e74c3c');
     }
-    updateFloat();
-    render();
+    updateFloat(); render();
   }
 
-  // ── carried float ──────────────────────────────────────────────
   function updateFloat() {
     const cf = document.getElementById('carried-float');
     const cl = document.getElementById('carried-label');
     if (S.carried) {
-      cf.textContent   = S.carried.emoji;
-      cf.style.display = 'flex';
-      cl.style.display = 'block';
+      cf.textContent = S.carried.emoji; cf.style.display = 'flex'; cl.style.display = 'block';
     } else {
-      cf.style.display = 'none';
-      cl.style.display = 'none';
+      cf.style.display = 'none'; cl.style.display = 'none';
     }
     positionFloat();
   }
 
   function positionFloat() {
     if (!S.carried) return;
-    const cf = document.getElementById('carried-float');
-    const cl = document.getElementById('carried-label');
-    cf.style.left = (S.grandmaX + 20) + 'px';
-    cl.style.left = (S.grandmaX + 10) + 'px';
+    document.getElementById('carried-float').style.left = (S.grandmaX + 20) + 'px';
+    document.getElementById('carried-label').style.left = (S.grandmaX + 10) + 'px';
   }
 
-  // ── effect text ────────────────────────────────────────────────
   function effect(msg, color) {
     const el = document.createElement('div');
     el.className = 'effect-text';
-    el.style.left  = Math.max(10, S.grandmaX - 50) + 'px';
-    el.style.top   = '150px';
-    el.style.color = color || '#c0392b';
+    el.style.left = Math.max(10, S.grandmaX - 50) + 'px';
+    el.style.top = '150px'; el.style.color = color || '#c0392b';
     el.textContent = msg;
     document.getElementById('effects-layer').appendChild(el);
     setTimeout(() => el.remove(), 1400);
   }
 
-  // ── render ─────────────────────────────────────────────────────
   function render() {
-    // Vera
     document.getElementById('grandma').style.left   = (S.grandmaX - 18) + 'px';
     document.getElementById('grandma').innerHTML     = grandmaSVG();
     document.getElementById('vera-label').style.left = S.grandmaX + 'px';
     positionFloat();
 
-    // HUD
     document.getElementById('hud-score').textContent = 'Pontos: ' + S.score;
     document.getElementById('hud-level').textContent = 'Fase ' + (S.level + 1);
     document.getElementById('hud-time').textContent  = '⏱ ' + Math.ceil(S.timeLeft) + 's';
     const pct = Math.max(0, S.timeLeft / S.lv.time * 100);
     const bar = document.getElementById('timer-bar');
-    bar.style.width      = pct + '%';
+    bar.style.width = pct + '%';
     bar.style.background = pct > 40 ? '#3fa842' : pct > 20 ? '#e67e22' : '#c0392b';
 
-    // trash items
-    const tl = document.getElementById('trash-layer');
-    tl.innerHTML = '';
+    const tl = document.getElementById('trash-layer'); tl.innerHTML = '';
     S.items.forEach(it => {
       if (it.collected) return;
       const wrap = document.createElement('div');
       wrap.className = 'trash-wrapper';
-      wrap.style.left = it.x + 'px';
-      wrap.style.top  = it.y + 'px';
-
+      wrap.style.left = it.x + 'px'; wrap.style.top = it.y + 'px';
       const d = document.createElement('div');
-      d.className = 'trash-item ' + it.bin;
-      d.textContent = it.emoji;
-
+      d.className = 'trash-item ' + it.bin; d.textContent = it.emoji;
       const tag = document.createElement('div');
-      tag.className = 'trash-tag';
-      tag.style.background = BIN_COLORS[it.bin];
-      tag.textContent = it.label;
-
-      wrap.appendChild(d);
-      wrap.appendChild(tag);
-
-      // mouse click (desktop)
+      tag.className = 'trash-tag'; tag.style.background = BIN_COLORS[it.bin]; tag.textContent = it.label;
+      wrap.appendChild(d); wrap.appendChild(tag);
       wrap.addEventListener('mousedown', e => { e.stopPropagation(); pickUp(it.uid); });
-      // touch tap (mobile) — touchstart fires before any drag logic
       wrap.addEventListener('touchstart', e => { e.stopPropagation(); }, {passive:true});
       wrap.addEventListener('touchend',   e => { e.preventDefault(); e.stopPropagation(); pickUp(it.uid); }, {passive:false});
-
       tl.appendChild(wrap);
     });
 
-    // bins
-    const bl = document.getElementById('bins-layer');
-    bl.innerHTML = '';
+    const bl = document.getElementById('bins-layer'); bl.innerHTML = '';
     BINS.forEach(bin => {
       const struck = S.strikeActive && bin.id !== S.strikeTarget;
-      const d = document.createElement('div');
-      d.className = 'bin';
+      const d = document.createElement('div'); d.className = 'bin';
       d.style.left = Math.round(W * bin.xr - 28) + 'px';
-
-      const body = document.createElement('div');
-      body.className = 'bin-body';
-      body.style.background = struck ? '#999' : bin.color;
-      body.style.opacity    = struck ? '0.5' : '1';
+      const body = document.createElement('div'); body.className = 'bin-body';
+      body.style.background = struck ? '#999' : bin.color; body.style.opacity = struck ? '0.5' : '1';
       body.innerHTML = bin.emoji + (struck ? '<div class="bin-strike">⛔ GREVE</div>' : '');
-
-      const lbl = document.createElement('div');
-      lbl.className = 'bin-label';
+      const lbl = document.createElement('div'); lbl.className = 'bin-label';
       lbl.textContent = struck ? '' : bin.label;
-
-      d.appendChild(body);
-      d.appendChild(lbl);
-      bl.appendChild(d);
+      d.appendChild(body); d.appendChild(lbl); bl.appendChild(d);
     });
 
-    // NPCs
-    const nl = document.getElementById('npc-layer');
-    nl.innerHTML = '';
+    const nl = document.getElementById('npc-layer'); nl.innerHTML = '';
     S.npcs.forEach(npc => {
-      const d  = document.createElement('div');
-      d.className  = 'npc';
-      d.style.left = Math.round(npc.x) + 'px';
-
-      const nm = document.createElement('div');
-      nm.className = 'npc-name';
-      nm.textContent = npc.name;
-
-      const em = document.createElement('div');
-      em.textContent = npc.emoji;
-
-      d.appendChild(nm);
-      d.appendChild(em);
-
+      const d = document.createElement('div'); d.className = 'npc'; d.style.left = Math.round(npc.x) + 'px';
+      const nm = document.createElement('div'); nm.className = 'npc-name'; nm.textContent = npc.name;
+      const em = document.createElement('div'); em.textContent = npc.emoji;
+      d.appendChild(nm); d.appendChild(em);
       if (npc.bubble) {
-        const b = document.createElement('div');
-        b.className   = 'speech-bubble';
-        b.textContent = npc.bubble;
-        d.appendChild(b);
+        const b = document.createElement('div'); b.className = 'speech-bubble'; b.textContent = npc.bubble; d.appendChild(b);
       }
       nl.appendChild(d);
     });
 
-    // rain
     const wl = document.getElementById('weather-layer');
     if (S.rainActive && wl.children.length < 22) {
       for (let i = 0; i < 22; i++) {
-        const r = document.createElement('div');
-        r.className = 'rain-drop';
+        const r = document.createElement('div'); r.className = 'rain-drop';
         r.style.left = Math.random() * 100 + '%';
         r.style.animationDuration = (0.35 + Math.random() * 0.4) + 's';
-        r.style.animationDelay   = (-Math.random()) + 's';
+        r.style.animationDelay = (-Math.random()) + 's';
         wl.appendChild(r);
       }
-    } else if (!S.rainActive) {
-      wl.innerHTML = '';
-    }
+    } else if (!S.rainActive) { wl.innerHTML = ''; }
   }
 
-  // ── game loop ──────────────────────────────────────────────────
   function loop() {
     if (!running) return;
-    const now = Date.now();
-    const dt  = Math.min((now - S.lastTick) / 1000, 0.1);
-    S.lastTick = now;
-    S.timeLeft -= dt;
+    const now = Date.now(), dt = Math.min((now - S.lastTick) / 1000, 0.1);
+    S.lastTick = now; S.timeLeft -= dt;
     if (S.timeLeft <= 0) { gameFail(); return; }
-
-    // move Vera
-    if (moveDir !== 0) {
-      S.grandmaX = Math.max(20, Math.min(W - 50,
-        S.grandmaX + moveDir * 140 * S.slowFactor * dt));
-    }
-
-    // NPCs
+    if (moveDir !== 0)
+      S.grandmaX = Math.max(20, Math.min(W - 50, S.grandmaX + moveDir * 140 * S.slowFactor * dt));
     S.npcs.forEach(npc => {
       npc.x += npc.dir * npc.speed * 44 * dt;
-      if (npc.x < 22)      { npc.x = 22;      npc.dir =  1; }
-      if (npc.x > W - 60)  { npc.x = W - 60;  npc.dir = -1; }
+      if (npc.x < 22) { npc.x = 22; npc.dir = 1; }
+      if (npc.x > W - 60) { npc.x = W - 60; npc.dir = -1; }
       npc.bt -= dt;
       if (npc.bt <= 0) {
-        const lines = NPC_LINES[npc.id];
-        npc.bubble = lines[Math.floor(Math.random() * lines.length)];
+        npc.bubble = NPC_LINES[npc.id][Math.floor(Math.random() * NPC_LINES[npc.id].length)];
         npc.bt = 2.5 + Math.random() * 2.5;
       }
       npc.blocking = Math.abs(npc.x - S.grandmaX) < 44;
     });
     S.npcBlocking = S.npcs.some(n => n.blocking);
-
     render();
     raf = requestAnimationFrame(loop);
   }
 
-  // ── level clear / fail ─────────────────────────────────────────
   function levelClear() {
-    const bonus = Math.round(S.timeLeft * 2);
-    S.score += bonus;
+    const bonus = Math.round(S.timeLeft * 2); S.score += bonus;
     const next = S.level + 1;
     if (next >= LEVELS.length) {
       showResult('🏆 Dona Vera venceu tudo!',
@@ -624,13 +522,10 @@ html, body {
 
   function gameFail() {
     running = false; cancelAnimationFrame(raf);
-    const wl = document.getElementById('weather-layer');
-    wl.innerHTML = '';
+    const wl = document.getElementById('weather-layer'); wl.innerHTML = '';
     for (let i = 0; i < 14; i++) {
-      const b = document.createElement('div');
-      b.className = 'bug';
-      b.style.left = Math.random() * 88 + '%';
-      b.style.top  = (80 + Math.random() * 320) + 'px';
+      const b = document.createElement('div'); b.className = 'bug';
+      b.style.left = Math.random() * 88 + '%'; b.style.top = (80 + Math.random() * 320) + 'px';
       b.style.animationDelay = (-Math.random() * 3) + 's';
       b.textContent = ['🪲','🐛','🦟','🪳'][Math.floor(Math.random() * 4)];
       wl.appendChild(b);
@@ -641,18 +536,10 @@ html, body {
   }
 
   function startGame(level) {
-    cancelAnimationFrame(raf);
-    running  = true;
-    moveDir  = 0;
-    touchStartX = null;
-    touchLastX  = null;
-    S = initState(level);
-    updateFloat();
-    render();
-    loop();
+    cancelAnimationFrame(raf); running = true; moveDir = 0; touchLastX = null;
+    S = initState(level); updateFloat(); render(); loop();
   }
 
-  // ── keyboard ───────────────────────────────────────────────────
   window.addEventListener('keydown', e => {
     if (!running) return;
     if (e.key === 'ArrowLeft')  { e.preventDefault(); moveDir = -1; }
@@ -662,12 +549,10 @@ html, body {
     if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') moveDir = 0;
   });
 
-  // ── touch drag to move (whole game area, but NOT on interactive items) ──
   ROOT.addEventListener('touchstart', e => {
     if (!running) return;
     if (e.target.closest('.trash-wrapper') || e.target.closest('#carried-float')) return;
-    touchStartX = e.touches[0].clientX;
-    touchLastX  = e.touches[0].clientX;
+    touchLastX = e.touches[0].clientX;
   }, {passive:true});
 
   ROOT.addEventListener('touchmove', e => {
@@ -681,17 +566,14 @@ html, body {
 
   ROOT.addEventListener('touchend', e => {
     if (e.target.closest('.trash-wrapper') || e.target.closest('#carried-float')) return;
-    touchStartX = null;
-    touchLastX  = null;
+    touchLastX = null;
   }, {passive:true});
 
-  // ── carried float: click or touch to drop ─────────────────────
   const cf = document.getElementById('carried-float');
   cf.addEventListener('mousedown', e => { e.stopPropagation(); drop(); });
   cf.addEventListener('touchstart', e => { e.stopPropagation(); }, {passive:true});
   cf.addEventListener('touchend',   e => { e.preventDefault(); e.stopPropagation(); drop(); }, {passive:false});
 
-  // ── screen buttons ─────────────────────────────────────────────
   document.getElementById('btn-intro').addEventListener('click', () => {
     showScreen(null); showLevelIntro(0);
   });
