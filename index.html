@@ -152,17 +152,39 @@ var W=ROOT.offsetWidth||380;
 var S={},raf=null,running=false,moveDir=0,touchLastX=null;
 
 function grandmaSVG(){
-  return '<svg viewBox="0 0 36 52" xmlns="http://www.w3.org/2000/svg">'+
-    '<ellipse cx="18" cy="8" rx="8" ry="8" fill="#f5cba7"/>'+
-    '<ellipse cx="18" cy="7" rx="9" ry="5" fill="#7d6608"/>'+
-    '<rect x="10" y="16" width="16" height="20" rx="4" fill="#8e44ad"/>'+
+  return '<svg viewBox="0 0 36 56" xmlns="http://www.w3.org/2000/svg">'+
+    // head
+    '<ellipse cx="18" cy="9" rx="8" ry="8" fill="#f5cba7"/>'+
+    // grey hair base
+    '<ellipse cx="18" cy="5" rx="9" ry="5" fill="#b0b0b0"/>'+
+    // hair curlers — small coloured circles on top of hair
+    '<circle cx="11" cy="4" r="2.2" fill="#e74c3c" stroke="#c0392b" stroke-width="0.5"/>'+
+    '<circle cx="18" cy="2.5" r="2.2" fill="#e74c3c" stroke="#c0392b" stroke-width="0.5"/>'+
+    '<circle cx="25" cy="4" r="2.2" fill="#e74c3c" stroke="#c0392b" stroke-width="0.5"/>'+
+    // curler pins
+    '<line x1="11" y1="2" x2="11" y2="5.5" stroke="#888" stroke-width="0.6"/>'+
+    '<line x1="18" y1="0.5" x2="18" y2="4" stroke="#888" stroke-width="0.6"/>'+
+    '<line x1="25" y1="2" x2="25" y2="5.5" stroke="#888" stroke-width="0.6"/>'+
+    // eyes
+    '<circle cx="14" cy="10" r="1.5" fill="#2c3e50"/>'+
+    '<circle cx="22" cy="10" r="1.5" fill="#2c3e50"/>'+
+    // smile
+    '<path d="M15 14 Q18 16 21 14" stroke="#c0392b" stroke-width="1.2" fill="none" stroke-linecap="round"/>'+
+    // body — dress (purple)
+    '<rect x="10" y="17" width="16" height="20" rx="4" fill="#8e44ad"/>'+
+    // apron — white panel over dress
+    '<rect x="13" y="18" width="10" height="16" rx="2" fill="white" opacity="0.85"/>'+
+    // apron strings at waist
+    '<line x1="13" y1="24" x2="10" y2="24" stroke="white" stroke-width="1.2" opacity="0.85"/>'+
+    '<line x1="23" y1="24" x2="26" y2="24" stroke="white" stroke-width="1.2" opacity="0.85"/>'+
+    // apron pocket
+    '<rect x="15" y="28" width="6" height="4" rx="1" fill="#ddd" opacity="0.7"/>'+
+    // arms
     '<line x1="10" y1="22" x2="3" y2="30" stroke="#f5cba7" stroke-width="4" stroke-linecap="round"/>'+
     '<line x1="26" y1="22" x2="33" y2="30" stroke="#f5cba7" stroke-width="4" stroke-linecap="round"/>'+
-    '<line x1="14" y1="36" x2="12" y2="50" stroke="#7d6608" stroke-width="4" stroke-linecap="round"/>'+
-    '<line x1="22" y1="36" x2="24" y2="50" stroke="#7d6608" stroke-width="4" stroke-linecap="round"/>'+
-    '<circle cx="14" cy="9" r="1.5" fill="#2c3e50"/>'+
-    '<circle cx="22" cy="9" r="1.5" fill="#2c3e50"/>'+
-    '<path d="M15 13 Q18 15 21 13" stroke="#c0392b" stroke-width="1.2" fill="none" stroke-linecap="round"/>'+
+    // legs
+    '<line x1="14" y1="37" x2="12" y2="52" stroke="#5d4037" stroke-width="4" stroke-linecap="round"/>'+
+    '<line x1="22" y1="37" x2="24" y2="52" stroke="#5d4037" stroke-width="4" stroke-linecap="round"/>'+
     '</svg>';
 }
 
@@ -205,7 +227,7 @@ function initState(level){
   }
   var all=lv.comp==='all';
   var npcs=[];
-  if(lv.comp==='babi'||all)      npcs.push({id:'babi',name:'Babi',emoji:'\uD83D\uDC69',x:W*0.38,dir:1,speed:0.40,bubble:null,bt:0});
+  if(lv.comp==='babi'||all)      npcs.push({id:'babi',name:'Babi',emoji:'\uD83D\uDC69\u200D\uD83E\uDDB1',x:W*0.38,dir:1,speed:0.40,bubble:null,bt:0});
   if(lv.comp==='andre'||all)     npcs.push({id:'andre',name:'Andr\u00E9',emoji:'\uD83D\uDC66',x:W*0.28,dir:-1,speed:0.95,bubble:null,bt:0});
   if(lv.comp==='bia'||all)       npcs.push({id:'bia',name:'Bia',emoji:'\uD83D\uDC67',x:W*0.50,dir:1,speed:0.80,bubble:null,bt:0});
   if(lv.comp==='neighbour'||all) npcs.push({id:'neighbour',name:'Sr. Ferreira',emoji:'\uD83D\uDC74',x:W*0.62,dir:1,speed:0.18,bubble:null,bt:0});
@@ -422,10 +444,7 @@ ROOT.addEventListener('touchmove',function(e){
   e.preventDefault();
   var dx=e.touches[0].clientX-touchLastX;
   touchLastX=e.touches[0].clientX;
-  // Only move Vera if drag is meaningful (not a tap on an item)
-  if(Math.abs(dx)>1){
-    S.grandmaX=Math.max(20,Math.min(W-50,S.grandmaX+dx*0.7));
-  }
+  S.grandmaX=Math.max(20,Math.min(W-50,S.grandmaX+dx*0.7));
 },{passive:false});
 ROOT.addEventListener('touchend',function(e){
   touchLastX=null;
