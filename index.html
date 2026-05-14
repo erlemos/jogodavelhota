@@ -133,20 +133,25 @@ var BINS=[
   {id:'general',color:'#7f8c8d',emoji:'\uD83D\uDDD1\uFE0F',label:'Geral',xr:0.92}
 ];
 var LEVELS=[
-  {items:4,time:90,comp:null,title:'Uma noite tranquila',desc:'Separa o lixo antes que os coletores cheguem!'},
-  {items:5,time:85,comp:'babi',title:'A Babi apareceu!',desc:'Sua filha parou pra \u201Cdar um oi r\u00E1pido\u201D e n\u00E3o para de falar.'},
-  {items:5,time:80,comp:'rain',title:'Come\u00E7ou a chover',desc:'O ch\u00E3o est\u00E1 escorregadio e a Vera anda mais devagar.'},
-  {items:6,time:78,comp:'andre',title:'Andr\u00E9 \u00E0 solta!',desc:'Seu neto est\u00E1 chutando as lixeiras de novo. Claro.'},
-  {items:6,time:75,comp:'bia',title:'Bia em modo foguete',desc:'Sua neta est\u00E1 correndo em c\u00EDrculos e atrapalhando tudo.'},
-  {items:6,time:72,comp:'neighbour',title:'Sr. Ferreira na cal\u00E7ada',desc:'O vizinho resolveu \u201Ctomar um ar\u201D justamente agora.'},
-  {items:7,time:68,comp:'strike',title:'Greve dos coletores!',desc:'S\u00F3 uma lixeira est\u00E1 funcionando hoje. Qual ser\u00E1?'},
-  {items:8,time:65,comp:'all',title:'Caos total',desc:'Todo mundo apareceu ao mesmo tempo. Boa sorte, Vera.'}
+  {items:4,time:95,comp:null,title:'Uma noite tranquila',desc:'Separa o lixo antes que os coletores cheguem!'},
+  {items:5,time:90,comp:'babi',title:'A Babi apareceu!',desc:'Sua filha parou pra \u201Cdar um oi r\u00E1pido\u201D e n\u00E3o para de falar.'},
+  {items:5,time:85,comp:'rain',title:'Come\u00E7ou a chover',desc:'O ch\u00E3o est\u00E1 escorregadio e a Vera anda mais devagar.'},
+  {items:6,time:82,comp:'andre',title:'Andr\u00E9 \u00E0 solta!',desc:'Seu neto est\u00E1 chutando as lixeiras de novo. Claro.'},
+  {items:6,time:80,comp:'bia',title:'Bia em modo foguete',desc:'Sua neta est\u00E1 correndo em c\u00EDrculos e atrapalhando tudo.'},
+  {items:6,time:78,comp:'neighbour',title:'Sr. Ferreira na cal\u00E7ada',desc:'O vizinho resolveu \u201Ctomar um ar\u201D justamente agora.'},
+  {items:5,time:82,comp:'strike',title:'Greve dos coletores!',desc:'S\u00F3 uma lixeira est\u00E1 funcionando hoje \u2014 mas a Vera d\u00E1 conta!'},
+  {items:6,time:78,comp:'dog',title:'O cachorro do vizinho!',desc:'O Rex fugiu e est\u00E1 correndo pela cal\u00E7ada. Cuidado!'},
+  {items:6,time:80,comp:'backpain',title:'Ai, as costas!',desc:'A Vera est\u00E1 com dor nas costas hoje. Cada passo custa.'},
+  {items:7,time:75,comp:'wind',title:'Vento forte!',desc:'O vento est\u00E1 espalhando o lixo pela cal\u00E7ada. Corre, Vera!'},
+  {items:7,time:72,comp:'rain_babi',title:'Chuva e a Babi juntas',desc:'Chovendo e a Babi n\u00E3o para de falar. Combina\u00E7\u00E3o perfeita.'},
+  {items:8,time:68,comp:'all',title:'Caos total',desc:'Todo mundo apareceu ao mesmo tempo. Boa sorte, Vera.'}
 ];
 var NPC_LINES={
   babi:['M\u00E3e, voc\u00EA comeu?','Fico s\u00F3 um minutinho!','Viu minhas chaves?','Deixa eu te ajudar!'],
   andre:['Vov\u00F3, me olha!','Posso comer um biscoito?','Chutei a lixeira!!','Que t\u00E9dio!!!'],
   bia:['Vov\u00F3, olha pra mim!','Achei um bichinho!','Essa lixeira \u00E9 MINHA!','Vamos tomar sorvete?'],
-  neighbour:['Boa noite, Vera!','Sua lixeira t\u00E1 vazando\u2026','No meu tempo era diferente...','Que lixo cheiroso!']
+  neighbour:['Boa noite, Vera!','Sua lixeira t\u00E1 vazando\u2026','No meu tempo era diferente...','Que lixo cheiroso!'],
+  dog:['Au au!','\uD83D\uDC3E','WOOF!','Au au au!']
 };
 var W=ROOT.offsetWidth||380;
 var S={},raf=null,running=false,moveDir=0,touchLastX=null;
@@ -227,16 +232,18 @@ function initState(level){
   }
   var all=lv.comp==='all';
   var npcs=[];
-  if(lv.comp==='babi'||all)      npcs.push({id:'babi',name:'Babi',emoji:'\uD83D\uDC69\u200D\uD83E\uDDB1',x:W*0.38,dir:1,speed:0.40,bubble:null,bt:0});
+  if(lv.comp==='babi'||lv.comp==='rain_babi'||all)      npcs.push({id:'babi',name:'Babi',emoji:'\uD83D\uDC69\u200D\uD83E\uDDB1',x:W*0.38,dir:1,speed:0.40,bubble:null,bt:0});
   if(lv.comp==='andre'||all)     npcs.push({id:'andre',name:'Andr\u00E9',emoji:'\uD83D\uDC66',x:W*0.28,dir:-1,speed:0.95,bubble:null,bt:0});
   if(lv.comp==='bia'||all)       npcs.push({id:'bia',name:'Bia',emoji:'\uD83D\uDC67',x:W*0.50,dir:1,speed:0.80,bubble:null,bt:0});
   if(lv.comp==='neighbour'||all) npcs.push({id:'neighbour',name:'Sr. Ferreira',emoji:'\uD83D\uDC74',x:W*0.62,dir:1,speed:0.18,bubble:null,bt:0});
+  if(lv.comp==='dog'||all)       npcs.push({id:'dog',name:'Rex',emoji:'\uD83D\uDC15',x:W*0.1,dir:1,speed:1.8,bubble:null,bt:0});
   var strikeTarget=BINS[Math.floor(Math.random()*BINS.length)].id;
   return{level:level,lv:lv,score:0,timeLeft:lv.time,items:items,carried:null,
     grandmaX:W*0.22,npcs:npcs,
-    strikeActive:lv.comp==='strike'||all,strikeTarget:strikeTarget,
-    rainActive:lv.comp==='rain'||all,
-    slowFactor:(lv.comp==='rain'||all)?0.6:1.0,
+    strikeActive:lv.comp==='strike'||all,
+    windActive:lv.comp==='wind',strikeTarget:strikeTarget,
+    rainActive:lv.comp==='rain'||lv.comp==='rain_babi'||all,
+    slowFactor:(lv.comp==='rain'||lv.comp==='rain_babi'||all)?0.6:lv.comp==='backpain'?0.45:1.0,
     collected:0,needed:lv.items,lastTick:Date.now(),npcBlocking:false};
 }
 function pickUp(uid){
@@ -301,7 +308,9 @@ function render(){
   document.getElementById('vera-label').style.left=S.grandmaX+'px';
   positionFloat();
   document.getElementById('hud-score').textContent='Pontos: '+S.score;
-  document.getElementById('hud-level').textContent='Fase '+(S.level+1);
+  var compIcons={rain:' \u2602',babi:' \uD83D\uDC69',andre:' \uD83D\uDC66',bia:' \uD83D\uDC67',neighbour:' \uD83D\uDC74',strike:' \uD83D\uDEAB',dog:' \uD83D\uDC15',backpain:' \uD83D\uDE23',wind:' \uD83C\uDF2C',rain_babi:' \u2602\uD83D\uDC69',all:' \uD83D\uDCA5'};
+  var ci=S.lv.comp&&compIcons[S.lv.comp]?compIcons[S.lv.comp]:'';
+  document.getElementById('hud-level').textContent='Fase '+(S.level+1)+ci;
   document.getElementById('hud-time').textContent='\u23F1 '+Math.ceil(S.timeLeft)+'s';
   var pct=Math.max(0,S.timeLeft/S.lv.time*100);
   var bar=document.getElementById('timer-bar');
@@ -377,6 +386,14 @@ function loop(){
   if(S.timeLeft<=0){gameFail();return;}
   if(moveDir!==0)
     S.grandmaX=Math.max(20,Math.min(W-50,S.grandmaX+moveDir*140*S.slowFactor*dt));
+  // wind: drift uncollected items
+  if(S.windActive){
+    S.items.forEach(function(it){
+      if(it.collected)return;
+      it.x+=18*dt;
+      if(it.x>W-54){it.x=24+Math.random()*20;}
+    });
+  }
   S.npcs.forEach(function(npc){
     npc.x+=npc.dir*npc.speed*44*dt;
     if(npc.x<22){npc.x=22;npc.dir=1;}
