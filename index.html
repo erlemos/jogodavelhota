@@ -139,7 +139,7 @@ var LEVELS=[
   {items:6,time:82,comp:'andre',title:'Andr\u00E9 \u00E0 solta!',desc:'Seu neto est\u00E1 chutando as lixeiras de novo. Claro.'},
   {items:6,time:80,comp:'bia',title:'Bia em modo foguete',desc:'Sua neta est\u00E1 correndo em c\u00EDrculos e atrapalhando tudo.'},
   {items:6,time:78,comp:'neighbour',title:'Sr. Ferreira na cal\u00E7ada',desc:'O vizinho resolveu \u201Ctomar um ar\u201D justamente agora.'},
-  {items:5,time:82,comp:'strike',title:'Greve dos coletores!',desc:'S\u00F3 uma lixeira est\u00E1 funcionando hoje \u2014 mas a Vera d\u00E1 conta!'},
+  {items:5,time:82,comp:'strike',title:'Greve dos coletores!',desc:'Greve! S\u00F3 uma lixeira funciona hoje \u2014 e o lixo j\u00E1 vem separado s\u00F3 pra ela. Mais f\u00E1cil assim!'},
   {items:6,time:78,comp:'dog',title:'O cachorro do vizinho!',desc:'O Rex fugiu e est\u00E1 correndo pela cal\u00E7ada. Cuidado!'},
   {items:6,time:80,comp:'backpain',title:'Ai, as costas!',desc:'A Vera est\u00E1 com dor nas costas hoje. Cada passo custa.'},
   {items:7,time:75,comp:'wind',title:'Vento forte!',desc:'O vento est\u00E1 espalhando o lixo pela cal\u00E7ada. Corre, Vera!'},
@@ -238,6 +238,18 @@ function initState(level){
   if(lv.comp==='neighbour'||all) npcs.push({id:'neighbour',name:'Sr. Ferreira',emoji:'\uD83D\uDC74',x:W*0.62,dir:1,speed:0.18,bubble:null,bt:0});
   if(lv.comp==='dog'||all)       npcs.push({id:'dog',name:'Rex',emoji:'\uD83D\uDC15',x:W*0.1,dir:1,speed:1.8,bubble:null,bt:0});
   var strikeTarget=BINS[Math.floor(Math.random()*BINS.length)].id;
+  // Strike: re-generate items using only the open bin's trash
+  if(lv.comp==='strike'||all){
+    items=[];
+    var strikePool=TRASH.filter(function(t){return t.bin===strikeTarget;});
+    for(var si=0;si<lv.items;si++){
+      var st=strikePool[Math.floor(Math.random()*strikePool.length)];
+      items.push({id:st.id,emoji:st.emoji,bin:st.bin,label:st.label,uid:si,
+        x:24+(si%4)*(W*0.14)+Math.random()*10,
+        y:52+Math.floor(si/4)*56+Math.random()*10,
+        collected:false});
+    }
+  }
   return{level:level,lv:lv,score:0,timeLeft:lv.time,items:items,carried:null,
     grandmaX:W*0.22,npcs:npcs,
     strikeActive:lv.comp==='strike'||all,
